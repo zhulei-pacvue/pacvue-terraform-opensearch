@@ -439,12 +439,12 @@ data "aws_iam_policy_document" "cloudwatch" {
   }
 }
 
-resource "aws_cloudwatch_log_resource_policy" "this" {
-  count = local.create_cloudwatch_log_groups && var.create_cloudwatch_log_resource_policy ? 1 : 0
-
-  policy_document = data.aws_iam_policy_document.cloudwatch[0].json
-  policy_name     = coalesce(var.cloudwatch_log_resource_policy_name, "opensearch-${var.domain_name}")
-}
+#resource "aws_cloudwatch_log_resource_policy" "this" {
+#  count = local.create_cloudwatch_log_groups && var.create_cloudwatch_log_resource_policy ? 1 : 0
+#
+#  policy_document = data.aws_iam_policy_document.cloudwatch[0].json
+#  policy_name     = coalesce(var.cloudwatch_log_resource_policy_name, "opensearch-${var.domain_name}")
+#}
 
 ################################################################################
 # Security Group
@@ -461,21 +461,21 @@ data "aws_subnet" "this" {
   id = element(var.vpc_options.subnet_ids, 0)
 }
 
-resource "aws_security_group" "this" {
-  count = local.create_security_group ? 1 : 0
-
-  name                   = var.security_group_use_name_prefix ? null : local.security_group_name
-  name_prefix            = var.security_group_use_name_prefix ? "${local.security_group_name}-" : null
-  description            = var.security_group_description
-  vpc_id                 = data.aws_subnet.this[0].vpc_id
-  revoke_rules_on_delete = true
-
-  tags = merge(local.tags, var.security_group_tags)
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
+#resource "aws_security_group" "this" {
+#  count = local.create_security_group ? 1 : 0
+#
+#  name                   = var.security_group_use_name_prefix ? null : local.security_group_name
+#  name_prefix            = var.security_group_use_name_prefix ? "${local.security_group_name}-" : null
+#  description            = var.security_group_description
+#  vpc_id                 = data.aws_subnet.this[0].vpc_id
+#  revoke_rules_on_delete = true
+#
+#  tags = merge(local.tags, var.security_group_tags)
+#
+#  lifecycle {
+#    create_before_destroy = true
+#  }
+#}
 
 resource "aws_vpc_security_group_ingress_rule" "this" {
   for_each = { for k, v in var.security_group_rules : k => v if local.create_security_group && try(v.type, "ingress") == "ingress" }
