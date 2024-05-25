@@ -25,10 +25,10 @@ module "wrapper" {
   cognito_options                       = try(each.value.cognito_options, var.defaults.cognito_options, {})
   create                                = try(each.value.create, var.defaults.create, true)
   create_access_policy                  = try(each.value.create_access_policy, var.defaults.create_access_policy, true)
-  create_cloudwatch_log_groups          = try(each.value.create_cloudwatch_log_groups, var.defaults.create_cloudwatch_log_groups, true)
-  create_cloudwatch_log_resource_policy = try(each.value.create_cloudwatch_log_resource_policy, var.defaults.create_cloudwatch_log_resource_policy, true)
+  create_cloudwatch_log_groups          = try(each.value.create_cloudwatch_log_groups, var.defaults.create_cloudwatch_log_groups, false)
+  create_cloudwatch_log_resource_policy = try(each.value.create_cloudwatch_log_resource_policy, var.defaults.create_cloudwatch_log_resource_policy, false)
   create_saml_options                   = try(each.value.create_saml_options, var.defaults.create_saml_options, false)
-  create_security_group                 = try(each.value.create_security_group, var.defaults.create_security_group, true)
+  create_security_group                 = try(each.value.create_security_group, var.defaults.create_security_group, false)
   domain_endpoint_options = try(each.value.domain_endpoint_options, var.defaults.domain_endpoint_options, {
     enforce_https       = true
     tls_security_policy = "Policy-Min-TLS-1-2-2019-07"
@@ -44,10 +44,10 @@ module "wrapper" {
     enabled = true
   })
   engine_version = try(each.value.engine_version, var.defaults.engine_version, null)
-  log_publishing_options = try(each.value.log_publishing_options, var.defaults.log_publishing_options, [
-    { log_type = "INDEX_SLOW_LOGS" },
-    { log_type = "SEARCH_SLOW_LOGS" },
-  ])
+  #log_publishing_options = try(each.value.log_publishing_options, var.defaults.log_publishing_options, [
+  #  { log_type = "INDEX_SLOW_LOGS" },
+  #  { log_type = "SEARCH_SLOW_LOGS" },
+  #])
   node_to_node_encryption = try(each.value.node_to_node_encryption, var.defaults.node_to_node_encryption, {
     enabled = true
   })
