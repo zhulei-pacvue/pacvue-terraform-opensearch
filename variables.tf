@@ -94,9 +94,10 @@ variable "engine_version" {
 variable "log_publishing_options" {
   description = "Configuration block for publishing slow and application logs to CloudWatch Logs. This block can be declared multiple times, for each log_type, within the same resource"
   type        = any
-  default = {
-    enabled = false
-  }
+  default = [
+    { log_type = "INDEX_SLOW_LOGS" },
+    { log_type = "SEARCH_SLOW_LOGS" },
+  ]
 }
 
 variable "node_to_node_encryption" {
@@ -225,7 +226,7 @@ variable "outbound_connections" {
 variable "create_cloudwatch_log_groups" {
   description = "Determines whether log groups are created"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "cloudwatch_log_group_retention_in_days" {
@@ -243,7 +244,7 @@ variable "cloudwatch_log_group_kms_key_id" {
 variable "create_cloudwatch_log_resource_policy" {
   description = "Determines whether a resource policy will be created for OpenSearch to log to CloudWatch"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "cloudwatch_log_resource_policy_name" {
@@ -259,7 +260,7 @@ variable "cloudwatch_log_resource_policy_name" {
 variable "create_security_group" {
   description = "Determines if a security group is created"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "security_group_name" {

@@ -165,15 +165,15 @@ resource "aws_opensearch_domain" "this" {
 
   engine_version = var.engine_version
 
-  dynamic "log_publishing_options" {
-    for_each = { for opt in var.log_publishing_options : opt.log_type => opt }
-
-    content {
-      cloudwatch_log_group_arn = try(log_publishing_options.value.cloudwatch_log_group_arn, aws_cloudwatch_log_group.this[log_publishing_options.key].arn)
-      enabled                  = try(log_publishing_options.value.enabled, false)
-      log_type                 = log_publishing_options.value.log_type
-    }
-  }
+  #dynamic "log_publishing_options" {
+  #  for_each = { for opt in var.log_publishing_options : opt.log_type => opt }
+#
+  #  content {
+  #    cloudwatch_log_group_arn = try(log_publishing_options.value.cloudwatch_log_group_arn, aws_cloudwatch_log_group.this[log_publishing_options.key].arn)
+  #    enabled                  = try(log_publishing_options.value.enabled, false)
+  #    log_type                 = log_publishing_options.value.log_type
+  #  }
+  #}
 
   dynamic "node_to_node_encryption" {
     for_each = length(var.node_to_node_encryption) > 0 ? [var.node_to_node_encryption] : []
