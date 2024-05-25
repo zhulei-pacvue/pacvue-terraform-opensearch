@@ -170,7 +170,7 @@ resource "aws_opensearch_domain" "this" {
 
     content {
       cloudwatch_log_group_arn = try(log_publishing_options.value.cloudwatch_log_group_arn, aws_cloudwatch_log_group.this[log_publishing_options.key].arn)
-      enabled                  = try(log_publishing_options.value.enabled, true)
+      enabled                  = try(log_publishing_options.value.enabled, false)
       log_type                 = log_publishing_options.value.log_type
     }
   }
