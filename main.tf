@@ -392,52 +392,52 @@ resource "aws_opensearch_outbound_connection" "this" {
 # Cloudwatch Log Group
 ################################################################################
 
-locals {
-  create_cloudwatch_log_groups = var.create && var.create_cloudwatch_log_groups
-}
+#locals {
+#  create_cloudwatch_log_groups = var.create && var.create_cloudwatch_log_groups
+#}
+#
+#resource "aws_cloudwatch_log_group" "this" {
+#  for_each = { for opt in var.log_publishing_options : opt.log_type => opt if try(opt.enabled, true) && local.create_cloudwatch_log_groups }
+#
+#  name              = try(each.value.log_group_name, "/aws/opensearch/${var.domain_name}/${each.key}")
+#  retention_in_days = try(each.value.log_group_retention_in_days, var.cloudwatch_log_group_retention_in_days)
+#  kms_key_id        = try(each.value.log_group_kms_key_id, var.cloudwatch_log_group_kms_key_id)
+#
+#  tags = merge(local.tags, try(each.value.log_group_tags, {}))
+#}
 
-resource "aws_cloudwatch_log_group" "this" {
-  for_each = { for opt in var.log_publishing_options : opt.log_type => opt if try(opt.enabled, true) && local.create_cloudwatch_log_groups }
-
-  name              = try(each.value.log_group_name, "/aws/opensearch/${var.domain_name}/${each.key}")
-  retention_in_days = try(each.value.log_group_retention_in_days, var.cloudwatch_log_group_retention_in_days)
-  kms_key_id        = try(each.value.log_group_kms_key_id, var.cloudwatch_log_group_kms_key_id)
-
-  tags = merge(local.tags, try(each.value.log_group_tags, {}))
-}
-
-data "aws_iam_policy_document" "cloudwatch" {
-  count = local.create_cloudwatch_log_groups && var.create_cloudwatch_log_resource_policy ? 1 : 0
-
-  statement {
-    actions = [
-      "logs:CreateLogStream",
-      "logs:PutLogEvents",
-      "logs:PutLogEventsBatch",
-    ]
-
-    # https://github.com/hashicorp/terraform-provider-aws/issues/14497
-    # resources = coalescelist([for log in aws_cloudwatch_log_group.this : "${log.arn}:*"], ["arn:${local.partition}:logs:*"])
-    resources = ["arn:${local.partition}:logs:*"]
-
-    principals {
-      identifiers = ["es.amazonaws.com"]
-      type        = "Service"
-    }
-
-    condition {
-      test     = "StringEquals"
-      variable = "aws:SourceAccount"
-      values   = [local.account_id]
-    }
-
-    condition {
-      test     = "ArnLike"
-      variable = "aws:SourceArn"
-      values   = [local.static_domain_arn]
-    }
-  }
-}
+#data "aws_iam_policy_document" "cloudwatch" {
+#  count = local.create_cloudwatch_log_groups && var.create_cloudwatch_log_resource_policy ? 1 : 0
+#
+#  statement {
+#    actions = [
+#      "logs:CreateLogStream",
+#      "logs:PutLogEvents",
+#      "logs:PutLogEventsBatch",
+#    ]
+#
+#    # https://github.com/hashicorp/terraform-provider-aws/issues/14497
+#    # resources = coalescelist([for log in aws_cloudwatch_log_group.this : "${log.arn}:*"], ["arn:${local.partition}:logs:*"])
+#    resources = ["arn:${local.partition}:logs:*"]
+#
+#    principals {
+#      identifiers = ["es.amazonaws.com"]
+#      type        = "Service"
+#    }
+#
+#    condition {
+#      test     = "StringEquals"
+#      variable = "aws:SourceAccount"
+#      values   = [local.account_id]
+#    }
+#
+#    condition {
+#      test     = "ArnLike"
+#      variable = "aws:SourceArn"
+#      values   = [local.static_domain_arn]
+#    }
+#  }
+#}
 
 #resource "aws_cloudwatch_log_resource_policy" "this" {
 #  count = local.create_cloudwatch_log_groups && var.create_cloudwatch_log_resource_policy ? 1 : 0
@@ -450,13 +450,13 @@ data "aws_iam_policy_document" "cloudwatch" {
 # Security Group
 ################################################################################
 
-locals {
-  create_security_group = var.create && var.create_security_group && length(var.vpc_options) > 0
-  security_group_name   = try(coalesce(var.security_group_name, var.domain_name), "")
-}
+#locals {
+#  create_security_group = var.create && var.create_security_group && length(var.vpc_options) > 0
+#  security_group_name   = try(coalesce(var.security_group_name, var.domain_name), "")
+#}
 
 data "aws_subnet" "this" {
-  count = local.create_security_group ? 1 : 0
+ # count = local.create_security_group ? 1 : 0
 
   id = element(var.vpc_options.subnet_ids, 0)
 }
@@ -477,40 +477,40 @@ data "aws_subnet" "this" {
 #  }
 #}
 
-resource "aws_vpc_security_group_ingress_rule" "this" {
-  for_each = { for k, v in var.security_group_rules : k => v if local.create_security_group && try(v.type, "ingress") == "ingress" }
-
-  # Required
-  security_group_id = aws_security_group.this[0].id
-  ip_protocol       = try(each.value.ip_protocol, "tcp")
-
-  # Optional
-  cidr_ipv4                    = lookup(each.value, "cidr_ipv4", null)
-  cidr_ipv6                    = lookup(each.value, "cidr_ipv6", null)
-  description                  = try(each.value.description, null)
-  from_port                    = try(each.value.from_port, 443)
-  prefix_list_id               = lookup(each.value, "prefix_list_id", null)
-  referenced_security_group_id = lookup(each.value, "referenced_security_group_id", null)
-  to_port                      = try(each.value.to_port, 443)
-
-  tags = merge(local.tags, var.security_group_tags, try(each.value.tags, {}))
-}
-
-resource "aws_vpc_security_group_egress_rule" "this" {
-  for_each = { for k, v in var.security_group_rules : k => v if local.create_security_group && try(v.type, "ingress") == "egress" }
-
-  # Required
-  security_group_id = aws_security_group.this[0].id
-  ip_protocol       = try(each.value.ip_protocol, "tcp")
-
-  # Optional
-  cidr_ipv4                    = lookup(each.value, "cidr_ipv4", null)
-  cidr_ipv6                    = lookup(each.value, "cidr_ipv6", null)
-  description                  = try(each.value.description, null)
-  from_port                    = try(each.value.from_port, null)
-  prefix_list_id               = lookup(each.value, "prefix_list_id", null)
-  referenced_security_group_id = lookup(each.value, "referenced_security_group_id", null)
-  to_port                      = try(each.value.to_port, null)
-
-  tags = merge(local.tags, var.security_group_tags, try(each.value.tags, {}))
-}
+#resource "aws_vpc_security_group_ingress_rule" "this" {
+#  for_each = { for k, v in var.security_group_rules : k => v if local.create_security_group && try(v.type, "ingress") == "ingress" }
+#
+#  # Required
+#  security_group_id = aws_security_group.this[0].id
+#  ip_protocol       = try(each.value.ip_protocol, "tcp")
+#
+#  # Optional
+#  cidr_ipv4                    = lookup(each.value, "cidr_ipv4", null)
+#  cidr_ipv6                    = lookup(each.value, "cidr_ipv6", null)
+#  description                  = try(each.value.description, null)
+#  from_port                    = try(each.value.from_port, 443)
+#  prefix_list_id               = lookup(each.value, "prefix_list_id", null)
+#  referenced_security_group_id = lookup(each.value, "referenced_security_group_id", null)
+#  to_port                      = try(each.value.to_port, 443)
+#
+#  tags = merge(local.tags, var.security_group_tags, try(each.value.tags, {}))
+#}
+#
+#resource "aws_vpc_security_group_egress_rule" "this" {
+#  for_each = { for k, v in var.security_group_rules : k => v if local.create_security_group && try(v.type, "ingress") == "egress" }
+#
+#  # Required
+#  security_group_id = aws_security_group.this[0].id
+#  ip_protocol       = try(each.value.ip_protocol, "tcp")
+#
+#  # Optional
+#  cidr_ipv4                    = lookup(each.value, "cidr_ipv4", null)
+#  cidr_ipv6                    = lookup(each.value, "cidr_ipv6", null)
+#  description                  = try(each.value.description, null)
+#  from_port                    = try(each.value.from_port, null)
+#  prefix_list_id               = lookup(each.value, "prefix_list_id", null)
+#  referenced_security_group_id = lookup(each.value, "referenced_security_group_id", null)
+#  to_port                      = try(each.value.to_port, null)
+#
+#  tags = merge(local.tags, var.security_group_tags, try(each.value.tags, {}))
+#}
